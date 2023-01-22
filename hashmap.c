@@ -40,6 +40,7 @@ typedef struct
 static size_t hash(char const *key);
 static inline void print_pair(const HashmapIterator *it);
 static HashmapIterator *get_iterator(const Hashmap *hm);
+static void free_iterator(HashmapIterator *it);
 static bool iterator_next(HashmapIterator *it);
 static inline char const *iterator_key(const HashmapIterator *it);
 static inline int iterator_value(const HashmapIterator *it);
@@ -152,6 +153,7 @@ void hm_print(const Hashmap *hm)
     {
         print_pair(it);
     }
+    free_iterator(it);
 }
 
 void hm_print_lists(const Hashmap *hm)
@@ -193,6 +195,7 @@ char **hm_keys(const Hashmap *hm)
         i++;
     }
 
+    free_iterator(it);
     return array;
 }
 
@@ -254,6 +257,11 @@ static HashmapIterator *get_iterator(const Hashmap *hm)
         }
     }
     return NULL;
+}
+
+static void free_iterator(HashmapIterator *it)
+{
+    free(it);
 }
 
 static bool iterator_next(HashmapIterator *it)
