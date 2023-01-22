@@ -1,0 +1,295 @@
+// hashmap.c
+
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
+#include "hashmap.h"
+
+#define string_equals(s1, s2) (strcmp((s1), (s2)) == 0)
+
+/* ================ */
+/* Type Definitions */
+/* ================ */
+
+/**
+ * @brief Represents a node of data in a linked list, which itself represents a
+ * bucket within the hashmap array.
+ */
+typedef struct ListNode
+{
+    char const *key;
+    int value;
+    struct ListNode *next;
+} Node;
+
+/**
+ * @brief Represents a state manager for iterating through the hashmap.
+ */
+typedef struct
+{
+    Hashmap const *source;
+    Node *current;
+    size_t index;
+} HashmapIterator;
+
+/* ========================================= */
+/* Forward Declarations for Helper Functions */
+/* ========================================= */
+
+static size_t hash(char const *key);
+static inline void print_pair(const HashmapIterator *it);
+static HashmapIterator *get_iterator(const Hashmap *hm);
+static bool iterator_next(HashmapIterator *it);
+static inline char const *iterator_key(const HashmapIterator *it);
+static inline int iterator_value(const HashmapIterator *it);
+
+/* ============================== */
+/* Interface Function Definitions */
+/* ============================== */
+
+void hm_init(Hashmap *hm)
+{
+    hm->size = 0;
+    for (size_t i = 0; i < HASHMAP_SIZE; i++)
+    {
+        hm->lists[i] = NULL;
+    }
+}
+
+int hm_get(const Hashmap *hm, char const *key)
+{
+    size_t index = hash(key);
+    Node *head = hm->lists[index];
+    Node *current = head;
+    while (current)
+    {
+        if (string_equals(head->key, key))
+            return head->value;
+        current = current->next;
+    }
+    return NOT_FOUND;
+}
+
+void hm_put(Hashmap *hm, char const *key, int value)
+{
+    size_t index = hash(key);
+    Node *head = hm->lists[index];
+
+    // Traverse the list looking for key
+    Node *previous = NULL;
+    Node *current = head;
+    while (current)
+    {
+        // This key is already in the hashmap, so just overwrite the value
+        if (string_equals(current->key, key))
+        {
+            current->value = value;
+            return;
+        }
+        previous = current;
+        current = current->next;
+    }
+
+    // The key does not exist, so append it to the list
+    Node *new_node = malloc(sizeof(Node));
+    new_node->key = key;
+    new_node->value = value;
+    new_node->next = NULL;
+
+    if (previous)
+        previous->next = new_node;
+    else
+        hm->lists[index] = new_node;
+
+    hm->size++;
+}
+
+int hm_remove(Hashmap *hm, char const *key)
+{
+    size_t index = hash(key);
+    Node *head = hm->lists[index];
+
+    // Remove from the list with two-pointer technique
+    Node *previous = NULL;
+    Node *current = head;
+    while (current)
+    {
+        if (string_equals(current->key, key))
+        {
+            size_t value = current->value;
+            if (previous)
+                previous->next = current;
+            else
+                hm->lists[index] = NULL;
+            free(current);
+            hm->size--;
+            return value;
+        }
+        previous = current;
+        current = current->next;
+    }
+
+    return NOT_FOUND;
+}
+
+size_t hm_size(const Hashmap *hm)
+{
+    return hm->size;
+}
+
+void hm_print(const Hashmap *hm)
+{
+    HashmapIterator *it = get_iterator(hm);
+    // First element, or empty hashmap
+    if (it)
+        print_pair(it);
+    else
+        printf("<EMPTY HASHMAP>\n");
+
+    // Rest of the elements
+    while (iterator_next(it))
+    {
+        print_pair(it);
+    }
+}
+
+void hm_print_lists(const Hashmap *hm)
+{
+    for (size_t i = 0; i < HASHMAP_SIZE; i++)
+    {
+        printf("[" LLU "] ", i);
+        Node *head = hm->lists[i];
+        Node *current = head;
+        while (current)
+        {
+            printf("{\"%s\": %d} -> ", current->key, current->value);
+            current = current->next;
+        }
+        printf("NULL\n");
+    }
+}
+
+char **hm_keys(const Hashmap *hm)
+{
+    size_t num_keys = hm_size(hm);
+    if (num_keys == 0)
+        return NULL;
+    char **array = malloc(num_keys * sizeof(char *));
+
+    // First pair
+    HashmapIterator *it = get_iterator(hm);
+    char const *key = iterator_key(it);
+    array[0] = malloc(strlen(key) * sizeof(char));
+    strcpy(array[0], key);
+
+    // Rest of the pairs
+    size_t i = 1;
+    while (iterator_next(it))
+    {
+        key = iterator_key(it);
+        array[i] = malloc(strlen(key) * sizeof(char));
+        strcpy(array[i], key);
+        i++;
+    }
+
+    return array;
+}
+
+void hm_free_keys_array(char **keys, size_t len)
+{
+    for (size_t i = 0; i < len; i++)
+    {
+        free(keys[i]);
+    }
+    free(keys);
+}
+
+/* =========================== */
+/* Helper Function Definitions */
+/* =========================== */
+
+/**
+ * @brief DJB2 string hashing function for hashmap keys.  The code was
+ * paraphrased from an example generated by ChatGPT.
+ *
+ * @param key The string to hash.
+ * @return size_t The hashed value corresponding to a valid index within the
+ * hashmap array.
+ */
+static size_t hash(char const *key)
+{
+    // Magic seed value.  This is a good value for mathematical reasons beyond
+    // the purpose of this exercise.
+    size_t hash = 5381;
+    int c;
+    while ((c = *key++))
+    {
+        hash = ((hash << 5) + hash) + c;
+    }
+    return hash % HASHMAP_SIZE;
+}
+
+static inline void print_pair(const HashmapIterator *it)
+{
+    printf("\"%s\": %d\n", iterator_key(it), iterator_value(it));
+}
+
+/* ==================================================================== */
+/* Function definitions for the internal HashmapIterator data structure */
+/* ==================================================================== */
+
+static HashmapIterator *get_iterator(const Hashmap *hm)
+{
+    // Find the first head
+    for (size_t i = 0; i < HASHMAP_SIZE; i++)
+    {
+        if (hm->lists[i])
+        {
+            HashmapIterator *it = malloc(sizeof(HashmapIterator));
+            it->source = hm;
+            it->current = hm->lists[i];
+            it->index = i;
+            return it;
+        }
+    }
+    return NULL;
+}
+
+static bool iterator_next(HashmapIterator *it)
+{
+    if (it == NULL)
+        return false;
+
+    // Current list still has nodes left
+    if (it->current->next)
+    {
+        it->current = it->current->next;
+        return true;
+    }
+
+    // Move onto the next populated bucket
+    for (size_t i = it->index + 1; i < HASHMAP_SIZE; i++)
+    {
+        Node *head = it->source->lists[i];
+        if (head)
+        {
+            it->current = head;
+            it->index = i;
+            return true;
+        }
+    }
+
+    // No more nodes left
+    return false;
+}
+
+static inline char const *iterator_key(const HashmapIterator *it)
+{
+    return it->current->key;
+}
+
+static inline int iterator_value(const HashmapIterator *it)
+{
+    return it->current->value;
+}
