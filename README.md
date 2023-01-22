@@ -57,6 +57,7 @@ I think I'm significantly more confident with C programming having done this. So
 
 * The C Programming Language
   * Using `#define` for function macros.
+  * Managing `#include` dependencies and forward declarations.
   * Refresher on using `malloc()` and `free()` for dealing with dynamically allocated data.
   * Using `typedef`s with `struct`s, as well as self-referencing `struct`s such as the `ListNode`, which needs to hold a pointer to another `ListNode` instance.
   * Better intuition and muscle memory for dealing with pointers.
@@ -74,8 +75,9 @@ I think I'm significantly more confident with C programming having done this. So
   * Getting used to not having direct access to object-oriented mechanisms.
   * Writing functions that mimic the underlying behavior of object-oriented mechanisms, like passing the reference to the object to operate on as the first argument.
   * Encapsulating getter/setter behavior with functions, even if they are a simple read/write on a `struct` field or a pointer dereference. This makes code more future-proof and maintainable with a consistent interface.
-  * Having a good separation of **interface** and **implementation**. In `hashmap.h`, I define a `Hashmap` interface I want to expose including only functions intended for the end-user as well as any necessary `#include` dependencies and forward declarations. All helper functions and types that users of a `Hashmap` need not worry about are defined only in `hashmap.c`.
-  * Writing good documentation. For example, if data is dynamically allocated and requires the caller to `free()` it later, that should be well noted in the relevant type or function documentation comments.\* Some practice on writing good a `Makefile` for better development flow. Notably, I learned some useful Makefile mechanisms like the `$(wildcard)` function, the `%.c` syntax for pattern-matching, and the `$(SOURCES:.c=.o)` trick for declaring a list of object files from their corresponding source file names. I also had a refresher on special Makefile variables like `$@` and `$^`.
+  * Having a good separation of **interface** and **implementation**. In `hashmap.h`, I define a `Hashmap` interface I want to expose including only functions intended for the end-user. All helper functions and types that users of a `Hashmap` need not worry about are defined only in `hashmap.c`.
+  * Writing good documentation. For example, if data is dynamically allocated and requires the caller to `free()` it later, that should be well noted in the relevant type or function documentation comments.
+  * Some practice on writing good a `Makefile` for better development flow. Notably, I learned some useful Makefile mechanisms like the `$(wildcard)` function, the `%.c` syntax for pattern-matching, and the `$(SOURCES:.c=.o)` trick for declaring a list of object files from their corresponding source file names. I also had a refresher on special Makefile variables like `$@` and `$^`.
 
 * Debugging
   * Some practice with using GDB for low-level debugging, including using **watchpoints** and the `condition` function to execute code until a variable holds a certain value.
