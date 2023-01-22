@@ -77,7 +77,7 @@ I think I'm significantly more confident with C programming having done this. So
   * Encapsulating getter/setter behavior with functions, even if they are a simple read/write on a `struct` field or a pointer dereference. This makes code more future-proof and maintainable with a consistent interface.
   * Having a good separation of **interface** and **implementation**. In `hashmap.h`, I define a `Hashmap` interface I want to expose including only functions intended for the end-user. All helper functions and types that users of a `Hashmap` need not worry about are defined only in `hashmap.c`.
   * Writing good documentation. For example, if data is dynamically allocated and requires the caller to `free()` it later, that should be well noted in the relevant type or function documentation comments.
-  * Some practice on writing good a `Makefile` for better development flow. Notably, I learned some useful Makefile mechanisms like the `$(wildcard)` function, the `%.c` syntax for pattern-matching, and the `$(SOURCES:.c=.o)` trick for declaring a list of object files from their corresponding source file names. I also had a refresher on special Makefile variables like `$@` and `$^`.
+  * Some practice on writing a good `Makefile` for better development flow. Notably, I learned some useful Makefile mechanisms like the `$(wildcard)` function, the `%.c` syntax for pattern-matching, and the `$(SOURCES:.c=.o)` trick for declaring a list of object files from their corresponding source file names. I also had a refresher on special Makefile variables like `$@` and `$^`.
 
 * Debugging
   * Some practice with using GDB for low-level debugging, including using **watchpoints** and the `condition` function to execute code until a variable holds a certain value.
